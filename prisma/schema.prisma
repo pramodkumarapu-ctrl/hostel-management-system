@@ -1,0 +1,355 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////// ENUMS ////////////////////
+
+enum UserRole {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+enum RoomType {
+  AC
+  NON_AC
+}
+
+enum SharingType {
+  ONE
+  TWO
+  THREE
+  FOUR
+}
+
+enum BedStatus {
+  AVAILABLE
+  OCCUPIED
+}
+
+enum ResidentStatus {
+  ACTIVE
+  LEFT
+}
+
+enum FeeStatus {
+  PAID
+  UNPAID
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+}
+
+enum ComplaintStatus {
+  OPEN
+  RESOLVED
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
+enum DayType {
+  WEEKDAY
+  WEEKEND
+}
+
+enum EntryType {
+  IN
+  OUT
+}
+
+enum LiveStatus {
+  INSIDE
+  OUTSIDE
+}
+
+//////////////////// USER ////////////////////
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole
+  createdAt DateTime @default(now())
+
+  hostels Hostel[]
+  staff   Staff?
+}
+
+//////////////////// HOSTEL ////////////////////
+
+model Hostel {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  phone     String
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  owner User @relation(fields: [ownerId], references: [id])
+
+  floors    Floor[]
+  rooms     Room[]
+  beds      Bed[]
+  residents Resident[]
+  staff     Staff[]
+
+  timings    HostelTiming[]
+  facilities Facility[]
+  foodMenu   FoodMenu[]
+}
+
+//////////////////// FLOOR ////////////////////
+
+model Floor {
+  id       String @id @default(uuid())
+  number   Int
+  hostelId String
+
+  hostel Hostel @relation(fields: [hostelId], references: [id])
+  rooms  Room[]
+
+  @@unique([hostelId, number])
+}
+
+//////////////////// ROOM ////////////////////
+
+model Room {
+  id       String  @id @default(uuid())
+  roomNo   String
+  type     String
+  sharing  Int
+  floorId  String
+  hostelId String
+
+  floor  Floor  @relation(fields: [floorId], references: [id])
+  hostel Hostel @relation(fields: [hostelId], references: [id])
+  beds   Bed[]
+}
+
+
+
+//////////////////// BED ////////////////////
+model Bed {
+  id         String    @id @default(uuid())
+  bedNo      String
+  status     BedStatus @default(AVAILABLE)
+  roomId     String
+  hostelId   String
+  residentId String?   @unique
+
+  room   Room   @relation(fields: [roomId], references: [id])
+  hostel Hostel @relation(fields: [hostelId], references: [id])
+
+  // ✅ Relation defined ONLY here
+  resident Resident? @relation(fields: [residentId], references: [id])
+
+  @@unique([roomId, bedNo])
+}
+
+//////////////////// RESIDENT ////////////////////
+
+model Resident {
+  id       String         @id @default(uuid())
+  hostelId String
+  fullName String
+  phone    String
+  email    String
+  status   ResidentStatus @default(ACTIVE)
+
+  stayStart DateTime
+  stayEnd   DateTime?
+
+  bed Bed?
+
+  hostel Hostel @relation(fields: [hostelId], references: [id])
+
+  fees       Fee[]
+  payments   Payment[]
+  complaints Complaint[]
+  leaves     LeaveRequest[]
+  visitors   Visitor[]
+  emergency  EmergencyContact[]
+  gateLogs   GateLog[]
+
+  // ✅ ADD THIS LINE (FIX)
+  liveStatus ResidentLiveStatus?
+}
+
+//////////////////// LIVE STATUS ////////////////////
+
+model ResidentLiveStatus {
+  id         String   @id @default(uuid())
+  residentId String   @unique
+  isInside   Boolean
+  updatedAt  DateTime @updatedAt
+
+  resident Resident @relation(fields: [residentId], references: [id])
+}
+
+//////////////////// GATE LOG ////////////////////
+
+model GateLog {
+  id         String    @id @default(uuid())
+  residentId String
+  type       EntryType
+  time       DateTime  @default(now())
+  reason     String?
+
+  resident Resident @relation(fields: [residentId], references: [id])
+}
+
+//////////////////// STAFF ////////////////////
+
+model Staff {
+  id       String @id @default(uuid())
+  userId   String @unique
+  hostelId String
+  role     String
+  phone    String
+
+  user   User   @relation(fields: [userId], references: [id])
+  hostel Hostel @relation(fields: [hostelId], references: [id])
+}
+
+//////////////////// FEES ////////////////////
+
+model Fee {
+  id         String    @id @default(uuid())
+  residentId String
+  month      Int
+  year       Int
+  amount     Float
+  status     FeeStatus
+
+  resident Resident  @relation(fields: [residentId], references: [id])
+  payments Payment[]
+
+  @@unique([residentId, month, year])
+}
+
+model Payment {
+  id         String        @id @default(uuid())
+  feeId      String
+  residentId String
+  amount     Float
+  method     PaymentMethod
+  paidAt     DateTime      @default(now())
+
+  fee      Fee      @relation(fields: [feeId], references: [id])
+  resident Resident @relation(fields: [residentId], references: [id])
+}
+
+//////////////////// COMPLAINT ////////////////////
+
+model Complaint {
+  id          String          @id @default(uuid())
+  residentId  String
+  title       String
+  description String
+  status      ComplaintStatus
+  createdAt   DateTime        @default(now())
+
+  resident Resident @relation(fields: [residentId], references: [id])
+}
+
+//////////////////// LEAVE ////////////////////
+
+model LeaveRequest {
+  id         String      @id @default(uuid())
+  residentId String
+  fromDate   DateTime
+  toDate     DateTime
+  reason     String
+  status     LeaveStatus
+
+  resident Resident @relation(fields: [residentId], references: [id])
+}
+
+//////////////////// VISITOR ////////////////////
+
+model Visitor {
+  id         String    @id @default(uuid())
+  residentId String
+  name       String
+  relation   String
+  inTime     DateTime
+  outTime    DateTime?
+
+  resident Resident @relation(fields: [residentId], references: [id])
+}
+
+//////////////////// EMERGENCY ////////////////////
+
+model EmergencyContact {
+  id         String @id @default(uuid())
+  residentId String
+  name       String
+  phone      String
+  relation   String
+
+  resident Resident @relation(fields: [residentId], references: [id])
+}
+
+//////////////////// HOSTEL TIMINGS ////////////////////
+
+model HostelTiming {
+  id       String  @id @default(uuid())
+  hostelId String
+  dayType  DayType
+  inTime   String
+  outTime  String
+
+  hostel Hostel @relation(fields: [hostelId], references: [id])
+
+  @@unique([hostelId, dayType])
+}
+
+//////////////////// FACILITIES ////////////////////
+
+model Facility {
+  id          String  @id @default(uuid())
+  hostelId    String
+  name        String
+  description String?
+  startTime   String?
+  endTime     String?
+  isActive    Boolean @default(true)
+
+  hostel Hostel @relation(fields: [hostelId], references: [id])
+
+  @@unique([hostelId, name])
+}
+
+//////////////////// FOOD MENU ////////////////////
+model FoodMenu {
+  id          String   @id @default(uuid())
+  hostelId    String
+  dayType     DayType
+  specificDay String? // Optional field for exact day: MONDAY, TUESDAY, etc.
+  mealType    MealType
+  items       String
+  startTime   String
+  endTime     String
+
+  hostel Hostel @relation(fields: [hostelId], references: [id])
+
+  @@unique([hostelId, dayType, specificDay, mealType])
+}
