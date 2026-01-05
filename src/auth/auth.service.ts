@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { PrismaService } from "src/prisma/prisma.service"; // Ensure this path is correct
+import { PrismaService } from '../prisma/prisma.service';
+ // Ensure this path is correct
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
