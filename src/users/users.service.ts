@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 
@@ -6,68 +10,95 @@ import * as bcrypt from 'bcryptjs';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  // CREATE USER
- async create(data: any) {
-  const existingUser = await this.prisma.user.findUnique({
-    where: { email: data.email },
-  });
+  async create(data: any) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
 
-  if (existingUser) {
-    throw new BadRequestException('Email already registered');
-  }
+    if (existingUser) {
+      throw new BadRequestException('Email already registered');
+    }
 
-  const hashedPassword = bcrypt.hashSync(data.password, 10);
+    const hashedPassword = bcrypt.hashSync(data.password, 10);
 
-  return this.prisma.user.create({
-    data: {
-      name: data.name,
-      email: data.email,
-      password: hashedPassword,
-      role: data.role,
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-    },
-  });
-}
-
-
-  // GET ALL USERS
-  findAll() {
-    return this.prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true },
+    return this.prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        password: hashedPassword,
+        role: data.role || 'USER',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
     });
   }
 
-  // GET USER BY ID
+  findAll() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findOne(id: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
 
-  // FIND BY EMAIL (for login)
-async findByEmail(email: string) {
-  return this.prisma.user.findUnique({
-    where: { email },
-  });
-}
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
+  }
 
+  async update(id: string, data: any) {
+    if (data.password) {
+      data.password = bcrypt.hashSync(data.password, 10);
+    }
 
-
-  // UPDATE USER
-  update(id: string, data: any) {
     return this.prisma.user.update({
       where: { id },
       data,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
     });
   }
 
-  // DELETE USER
-  delete(id: string) {
-    return this.prisma.user.delete({ where: { id } });
+  async delete(id: string) {
+    return this.prisma.user.delete({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
   }
 }

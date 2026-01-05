@@ -1,15 +1,18 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UsersController } from './user.controller';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaModule } from '../prisma/prisma.module';
+import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from '../auth/auth.module';
-
+import { UsersController } from './user.controller';
 
 @Module({
   imports: [
-    forwardRef(() => AuthModule), // ✅ FIX circular dependency
+    PrismaModule,
+    JwtModule,
+    forwardRef(() => AuthModule),
   ],
   controllers: [UsersController],
-  providers: [UsersService, PrismaService],
+  providers: [UsersService],
+  exports: [UsersService],
 })
 export class UsersModule {}

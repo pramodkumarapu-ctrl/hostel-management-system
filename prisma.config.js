@@ -1,13 +1,14 @@
-// prisma.config.js
-require("dotenv").config();           // Load environment variables
-const { defineConfig, env } = require("prisma/config");  // CommonJS require
+
+require("dotenv").config();
+const { defineConfig, env } = require("prisma/config");
 
 module.exports = defineConfig({
-  schema: "prisma/schema.prisma",       // Path to your Prisma schema
+  schema: "prisma/schema.prisma",
   migrations: {
-    path: "prisma/migrations",          // Path to migrations folder
+    path: "prisma/migrations",
   },
   datasource: {
-    url: env("DATABASE_URL"),           // Database URL from .env
+    // Use DIRECT_URL for Prisma CLI
+    url: env("DIRECT_URL"),
   },
 });
