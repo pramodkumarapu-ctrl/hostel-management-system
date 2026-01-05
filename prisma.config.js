@@ -1,14 +1,13 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
-const config_1 = require("prisma/config");
-exports.default = (0, config_1.defineConfig)({
-    schema: "prisma/schema.prisma",
-    migrations: {
-        path: "prisma/migrations",
-    },
-    datasource: {
-        url: (0, config_1.env)("DATABASE_URL"),
-    },
+// prisma.config.js
+require("dotenv").config();           // Load environment variables
+const { defineConfig, env } = require("prisma/config");  // CommonJS require
+
+module.exports = defineConfig({
+  schema: "prisma/schema.prisma",       // Path to your Prisma schema
+  migrations: {
+    path: "prisma/migrations",          // Path to migrations folder
+  },
+  datasource: {
+    url: env("DATABASE_URL"),           // Database URL from .env
+  },
 });
-//# sourceMappingURL=prisma.config.js.map
