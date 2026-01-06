@@ -17,7 +17,8 @@ import { FoodMenuModule } from './menu-items/menu-items.module';
 import { InvoiceModule } from './invoices/invoices.module';
 import { PaymentModule } from './payments/payments.module';
 import { ResidentModule } from './residents/residents.module';
-import { UsersModule } from './users/user.module';
+import { UsersController } from './users/users.controller';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -36,7 +37,7 @@ import { UsersModule } from './users/user.module';
     FeeModule,
     PaymentModule,
   ],
-  controllers: [AppController], // Only global controllers
+  controllers: [AppController, UsersController], // Only global controllers
   providers: [AppService, PrismaService], // Only global providers
 })
 export class AppModule {}
