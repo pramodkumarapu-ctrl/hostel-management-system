@@ -1,16 +1,13 @@
-
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthModule } from '../auth/auth.module';
 import { UsersController } from './users.controller';
 
 @Module({
   imports: [
     PrismaModule,
-    JwtModule,
-    forwardRef(() => AuthModule),
+    JwtModule, // ⬅️ Jwt comes from AppModule (GLOBAL)
   ],
   controllers: [UsersController],
   providers: [UsersService],

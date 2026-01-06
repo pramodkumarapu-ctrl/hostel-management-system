@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from './prisma/prisma.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PrismaService } from './prisma/prisma.service';
+import { JwtModule } from '@nestjs/jwt';
 
-// Modules
+// Feature Modules
+import { UsersModule } from './users/users.module';
 import { FeaturesModule } from './features/features.module';
 import { OperationsModule } from './operations/operations.module';
 import { FloorsModule } from './floors/floors.module';
@@ -17,13 +19,18 @@ import { FoodMenuModule } from './menu-items/menu-items.module';
 import { InvoiceModule } from './invoices/invoices.module';
 import { PaymentModule } from './payments/payments.module';
 import { ResidentModule } from './residents/residents.module';
-import { UsersController } from './users/users.controller';
-import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
-    FeaturesModule,
+    // 🔐 JWT GLOBAL (VERY IMPORTANT)
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET || 'superSecretKey',
+      signOptions: { expiresIn: '1d' },
+    }),
+
     UsersModule,
+    FeaturesModule,
     HostelModule,
     FoodMenuModule,
     OperationsModule,
@@ -37,7 +44,7 @@ import { UsersModule } from './users/users.module';
     FeeModule,
     PaymentModule,
   ],
-  controllers: [AppController, UsersController], // Only global controllers
-  providers: [AppService, PrismaService], // Only global providers
+  controllers: [AppController], // ✅ ONLY AppController
+  providers: [AppService, PrismaService],
 })
 export class AppModule {}
